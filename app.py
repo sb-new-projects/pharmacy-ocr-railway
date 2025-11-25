@@ -6,12 +6,12 @@ import json
 from datetime import datetime
 from streamlit_paste_button import paste_image_button
 
-st.set_page_config(page_title="Quebec Rx OCR", page_icon="💊", layout="wide")
+st.set_page_config(page_title="OCR Ordonnance Québec", page_icon="💊", layout="wide")
 
 # Privacy notice
-st.success("🔒 **PRIVACY GUARANTEE**: No images or data are saved. Everything processes in memory and is deleted when you close this page.")
+st.success("🔒 **GARANTIE DE CONFIDENTIALITÉ**: Aucune image ni donnée n'est sauvegardée. Tout est traité en mémoire et supprimé à la fermeture de cette page.")
 
-st.title("💊 Quebec Prescription OCR")
+st.title("💊 OCR Ordonnance Québec")
 
 def extract_prescription_only(ocr_text):
     """
@@ -112,11 +112,11 @@ def extract_prescription_only(ocr_text):
     return extracted
 
 # PASTE ZONE
-st.markdown("### 📋 Quick Paste Workflow")
-st.info("**3-Second Process:** `Win+Shift+S` → Select prescription area → Click button below → `Ctrl+V`")
+st.markdown("### 📋 Coller depuis le presse-papiers")
+st.info("**Processus en 3 secondes:** `Win+Maj+S` → Sélectionner l'ordonnance → Cliquer le bouton → `Ctrl+V`")
 
 paste_result = paste_image_button(
-    label="📋 Paste from Clipboard",
+    label="📋 Coller l'image",
     background_color="#00A0DC",
     hover_background_color="#0088C0",
     key="paste_prescription"
@@ -128,20 +128,20 @@ if paste_result.image_data is not None:
     col1, col2 = st.columns([1, 1])
 
     with col1:
-        st.subheader("📸 Prescription")
+        st.subheader("📸 Ordonnance")
         st.image(image, use_column_width=True)
 
     with col2:
-        st.subheader("📋 Extracted Fields")
+        st.subheader("📋 Champs extraits")
 
-        with st.spinner("🔍 Reading..."):
+        with st.spinner("🔍 Lecture en cours..."):
             # OCR
             ocr_text = pytesseract.image_to_string(image, lang='eng+fra')
 
             # Extract
             fields = extract_prescription_only(ocr_text)
 
-            st.markdown("### Copy-Paste Ready:")
+            st.markdown("### Prêt à copier-coller:")
 
             # Date
             if fields['date']:
@@ -191,61 +191,61 @@ if paste_result.image_data is not None:
                 st.code(fields['directions'])
                 st.markdown("---")
 
+            # Raw OCR display (always visible)
+            st.markdown("### 🔍 Texte OCR brut:")
+            st.text_area("", ocr_text, height=150, disabled=True)
+
             # Export
-            st.markdown("### 💾 Export")
+            st.markdown("### 💾 Exporter")
             json_data = json.dumps(fields, indent=2, ensure_ascii=False)
 
             col_a, col_b = st.columns(2)
             with col_a:
                 st.download_button(
-                    "📥 Download JSON",
+                    "📥 Télécharger JSON",
                     json_data,
                     file_name=f"rx_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
                     mime="application/json"
                 )
             with col_b:
-                if st.button("📋 Copy All"):
+                if st.button("📋 Copier tout"):
                     st.code(json_data, language='json')
-
-            # Debug
-            with st.expander("🔍 Raw OCR (Debug)"):
-                st.text_area("", ocr_text, height=150)
 
 else:
     st.markdown("""
-    ### 🔒 Privacy & Security:
-    - **NO DATABASE** - nothing is saved anywhere
-    - **NO STORAGE** - images process in RAM only
-    - **NO LOGS** - prescription data is never logged
-    - **AUTO-DELETE** - everything erased when you close the page
-    - **HIPAA/PIPEDA COMPLIANT** - zero data retention
+    ### 🔒 Confidentialité et sécurité:
+    - **AUCUNE BASE DE DONNÉES** - rien n'est sauvegardé
+    - **AUCUN STOCKAGE** - images traitées en mémoire seulement
+    - **AUCUN LOG** - les données d'ordonnance ne sont jamais enregistrées
+    - **SUPPRESSION AUTO** - tout est effacé à la fermeture de la page
+    - **CONFORME LPRPDE/Loi 25** - aucune rétention de données
 
-    Each upload is completely isolated. Your prescription images **never** touch a hard drive.
+    Chaque image est complètement isolée. Vos ordonnances ne touchent **jamais** un disque dur.
 
-    ### ✅ What's Extracted (From Rx Paper):
-    - **Date** - when prescription was written
-    - **Prescriber** - Dr./Dre. name
-    - **Medication** - drug name (brand or generic)
-    - **Strength** - dosage (10mg, 500mg, etc.)
-    - **Form** - caps, tabs, cream, etc.
-    - **Quantity** - how many to dispense
-    - **Refills** - number of renewals
-    - **Directions** - dosing instructions (Sig/Posologie)
+    ### ✅ Ce qui est extrait (de l'ordonnance):
+    - **Date** - date de rédaction
+    - **Prescripteur** - nom du Dr/Dre
+    - **Médicament** - nom commercial ou générique
+    - **Force** - dosage (10mg, 500mg, etc.)
+    - **Forme** - caps, comp, crème, etc.
+    - **Quantité** - nombre à servir
+    - **Renouvellements** - nombre de répétitions
+    - **Posologie** - instructions de prise
 
-    ### ❌ What's NOT Extracted (Not on Rx):
-    - **Patient info** (name, DOB, phone, RAMQ) - already in your system
-    - **DIN** - you look this up based on medication name
-    - **Product dispensed** - your choice of brand/generic
-    - **Source** - your supplier
-    - **Format** - package size
-    - **Dispensing date** - today's date
+    ### ❌ Ce qui n'est PAS extrait:
+    - **Info patient** (nom, DDN, tél, RAMQ) - déjà dans votre système
+    - **DIN** - vous le cherchez selon le médicament
+    - **Produit servi** - votre choix marque/générique
+    - **Source** - votre fournisseur
+    - **Format** - taille du paquet
+    - **Date de service** - date du jour
 
-    ### 🔄 Your Workflow:
-    1. **Win+Shift+S** - Screenshot prescription
-    2. **Click paste button** - above
-    3. **Ctrl+V** - paste image
-    4. **Copy extracted fields** - paste into pharmacy software
-    5. **Look up patient** - already in system
-    6. **Look up DIN** - based on medication
-    7. **Complete transaction**
+    ### 🔄 Votre flux de travail:
+    1. **Win+Maj+S** - Capture d'écran de l'ordonnance
+    2. **Cliquer le bouton** - ci-dessus
+    3. **Ctrl+V** - coller l'image
+    4. **Copier les champs** - coller dans votre logiciel
+    5. **Chercher le patient** - déjà dans le système
+    6. **Chercher le DIN** - selon le médicament
+    7. **Compléter la transaction**
     """)
