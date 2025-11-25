@@ -138,7 +138,7 @@ if paste_result.image_data is not None:
 
     with col1:
         st.subheader("📸 Ordonnance")
-        st.image(image, use_container_width=True)
+        st.image(image, use_column_width=True)
 
     with col2:
         # Tabs for switching between extracted fields and raw OCR
