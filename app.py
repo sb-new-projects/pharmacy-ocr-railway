@@ -8,8 +8,12 @@ from streamlit_paste_button import paste_image_button
 
 st.set_page_config(page_title="OCR Ordonnance Québec", page_icon="💊", layout="wide")
 
-# Privacy notice
-st.success("🔒 **GARANTIE DE CONFIDENTIALITÉ**: Aucune image ni donnée n'est sauvegardée. Tout est traité en mémoire et supprimé à la fermeture de cette page.")
+# RED WARNING - No patient identifiers
+st.markdown("""
+<div style="background-color: #FF4B4B; color: white; padding: 15px; border-radius: 10px; text-align: center; font-weight: bold; font-size: 18px;">
+⚠️ NE PAS CAPTURER: Nom du patient, date de naissance, téléphone, RAMQ ou tout identifiant personnel
+</div>
+""", unsafe_allow_html=True)
 
 st.title("💊 OCR Ordonnance Québec")
 
@@ -111,12 +115,11 @@ def extract_prescription_only(ocr_text):
 
     return extracted
 
-# PASTE ZONE
-st.markdown("### 📋 Coller depuis le presse-papiers")
-st.info("**Processus en 3 secondes:** `Win+Maj+S` → Sélectionner l'ordonnance → Cliquer le bouton → `Ctrl+V`")
+# PASTE ZONE - Simple instruction
+st.markdown("##### 1️⃣ `Win+Maj+S` pour capturer l'ordonnance &nbsp;&nbsp; 2️⃣ Appuyez sur le bouton ci-dessous")
 
 paste_result = paste_image_button(
-    label="📋 Coller l'image",
+    label="📋 APPUYEZ ICI POUR COLLER LA CAPTURE",
     background_color="#00A0DC",
     hover_background_color="#0088C0",
     key="paste_prescription"
@@ -125,127 +128,81 @@ paste_result = paste_image_button(
 if paste_result.image_data is not None:
     image = paste_result.image_data
 
+    with st.spinner("🔍 Lecture en cours..."):
+        # OCR
+        ocr_text = pytesseract.image_to_string(image, lang='eng+fra')
+        # Extract
+        fields = extract_prescription_only(ocr_text)
+
     col1, col2 = st.columns([1, 1])
 
     with col1:
         st.subheader("📸 Ordonnance")
-        st.image(image, use_column_width=True)
+        st.image(image, use_container_width=True)
 
     with col2:
-        st.subheader("📋 Champs extraits")
+        # Tabs for switching between extracted fields and raw OCR
+        tab1, tab2 = st.tabs(["📋 Champs extraits", "🔍 Texte OCR brut"])
 
-        with st.spinner("🔍 Lecture en cours..."):
-            # OCR
-            ocr_text = pytesseract.image_to_string(image, lang='eng+fra')
-
-            # Extract
-            fields = extract_prescription_only(ocr_text)
-
+        with tab1:
             st.markdown("### Prêt à copier-coller:")
 
             # Date
             if fields['date']:
-                st.text_input("📅 Date", fields['date'], disabled=True)
-                st.code(fields['date'])
-                st.markdown("---")
+                st.code(f"📅 Date: {fields['date']}")
 
             # Prescriber
             if fields['prescriber']:
-                st.text_input("👨‍⚕️ Prescripteur", fields['prescriber'], disabled=True)
-                st.code(fields['prescriber'])
-                st.markdown("---")
+                st.code(f"👨‍⚕️ Prescripteur: {fields['prescriber']}")
 
             # Medication
             if fields['medication']:
-                st.text_input("💊 Médicament", fields['medication'], disabled=True)
-                st.code(fields['medication'])
-                st.markdown("---")
+                st.code(f"💊 Médicament: {fields['medication']}")
 
             # Strength
             if fields['strength']:
-                st.text_input("⚖️ Force", fields['strength'], disabled=True)
-                st.code(fields['strength'])
-                st.markdown("---")
+                st.code(f"⚖️ Force: {fields['strength']}")
 
             # Form
             if fields['form']:
-                st.text_input("📦 Forme", fields['form'], disabled=True)
-                st.code(fields['form'])
-                st.markdown("---")
+                st.code(f"📦 Forme: {fields['form']}")
 
             # Quantity
             if fields['quantity']:
-                st.text_input("🔢 Quantité", fields['quantity'], disabled=True)
-                st.code(fields['quantity'])
-                st.markdown("---")
+                st.code(f"🔢 Quantité: {fields['quantity']}")
 
             # Refills
             if fields['refills']:
-                st.text_input("🔄 Renouvellements", fields['refills'], disabled=True)
-                st.code(fields['refills'])
-                st.markdown("---")
+                st.code(f"🔄 Renouvellements: {fields['refills']}")
 
             # Directions
             if fields['directions']:
-                st.text_area("📝 Posologie", fields['directions'], height=100, disabled=True)
-                st.code(fields['directions'])
-                st.markdown("---")
-
-            # Raw OCR display (always visible)
-            st.markdown("### 🔍 Texte OCR brut:")
-            st.text_area("", ocr_text, height=150, disabled=True)
+                st.code(f"📝 Posologie: {fields['directions']}")
 
             # Export
-            st.markdown("### 💾 Exporter")
+            st.markdown("---")
             json_data = json.dumps(fields, indent=2, ensure_ascii=False)
+            st.download_button(
+                "📥 Télécharger JSON",
+                json_data,
+                file_name=f"rx_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                mime="application/json"
+            )
 
-            col_a, col_b = st.columns(2)
-            with col_a:
-                st.download_button(
-                    "📥 Télécharger JSON",
-                    json_data,
-                    file_name=f"rx_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-                    mime="application/json"
-                )
-            with col_b:
-                if st.button("📋 Copier tout"):
-                    st.code(json_data, language='json')
+        with tab2:
+            st.markdown("### Texte complet extrait par OCR:")
+            st.text_area("", ocr_text, height=400, disabled=True, label_visibility="collapsed")
 
 else:
     st.markdown("""
-    ### 🔒 Confidentialité et sécurité:
-    - **AUCUNE BASE DE DONNÉES** - rien n'est sauvegardé
-    - **AUCUN STOCKAGE** - images traitées en mémoire seulement
-    - **AUCUN LOG** - les données d'ordonnance ne sont jamais enregistrées
-    - **SUPPRESSION AUTO** - tout est effacé à la fermeture de la page
-    - **CONFORME LPRPDE/Loi 25** - aucune rétention de données
+    ### ✅ Ce qui est extrait:
+    Date, Prescripteur, Médicament, Force, Forme, Quantité, Renouvellements, Posologie
 
-    Chaque image est complètement isolée. Vos ordonnances ne touchent **jamais** un disque dur.
+    ### 🔄 Comment utiliser:
+    1. **Win+Maj+S** → Capturer la section ordonnance (sans info patient!)
+    2. **Appuyer sur le bouton bleu** ci-dessus
+    3. **Copier les champs** → Coller dans votre logiciel
 
-    ### ✅ Ce qui est extrait (de l'ordonnance):
-    - **Date** - date de rédaction
-    - **Prescripteur** - nom du Dr/Dre
-    - **Médicament** - nom commercial ou générique
-    - **Force** - dosage (10mg, 500mg, etc.)
-    - **Forme** - caps, comp, crème, etc.
-    - **Quantité** - nombre à servir
-    - **Renouvellements** - nombre de répétitions
-    - **Posologie** - instructions de prise
-
-    ### ❌ Ce qui n'est PAS extrait:
-    - **Info patient** (nom, DDN, tél, RAMQ) - déjà dans votre système
-    - **DIN** - vous le cherchez selon le médicament
-    - **Produit servi** - votre choix marque/générique
-    - **Source** - votre fournisseur
-    - **Format** - taille du paquet
-    - **Date de service** - date du jour
-
-    ### 🔄 Votre flux de travail:
-    1. **Win+Maj+S** - Capture d'écran de l'ordonnance
-    2. **Cliquer le bouton** - ci-dessus
-    3. **Ctrl+V** - coller l'image
-    4. **Copier les champs** - coller dans votre logiciel
-    5. **Chercher le patient** - déjà dans le système
-    6. **Chercher le DIN** - selon le médicament
-    7. **Compléter la transaction**
+    ---
+    🔒 *Aucune donnée sauvegardée. Tout est supprimé à la fermeture.*
     """)
