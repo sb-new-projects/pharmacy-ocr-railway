@@ -2,9 +2,9 @@
 
 **Project Type**: Healthcare OCR Web Application
 **Status**: ✅ Production Ready
-**Live URL**: https://pharmacy-ocr-railway-production.up.railway.app
+**Live URL**: https://pharmacie.up.railway.app
 **Created**: 2025-11-22
-**Last Updated**: 2025-11-22
+**Last Updated**: 2025-11-25
 
 ---
 
@@ -17,7 +17,7 @@ Extract prescription fields from Quebec pharmacy Rx images with **zero data rete
 ## What It Does
 
 ### Input:
-- Upload prescription image (photo or scan)
+- Clipboard paste: `Win+Maj+S` → Click button
 
 ### Output (Copy-Paste Ready):
 1. Date (when written)
@@ -65,9 +65,10 @@ Extract prescription fields from Quebec pharmacy Rx images with **zero data rete
 
 ### Production:
 - **Platform**: Railway
-- **URL**: https://pharmacy-ocr-railway-production.up.railway.app
+- **URL**: https://pharmacie.up.railway.app
 - **GitHub**: https://github.com/sb-new-projects/pharmacy-ocr-railway
-- **Auto-deploy**: Enabled (push to `main`)
+- **Railway Project**: `passionate-kindness`
+- **Railway Service**: `pharmacy-ocr-railway`
 
 ### Infrastructure:
 ```
@@ -83,13 +84,12 @@ GitHub repo → Railway detects push → Builds Dockerfile
 
 ```
 pharmacy-ocr-railway/
-├── app.py                    # Main application (privacy-focused)
-├── Dockerfile                # Railway deployment config
-├── requirements.txt          # Python dependencies
-├── README.md                 # User documentation
-├── PROJECT_SUMMARY.md        # This file
-├── PRIVACY_POLICY.md         # Privacy guarantee
-└── DEPLOYMENT_COMPLETE.md    # Deployment details
+├── app.py              # Main Streamlit app (209 lines)
+├── Dockerfile          # Railway container config
+├── requirements.txt    # Python dependencies
+├── README.md           # User documentation
+├── PROJECT_SUMMARY.md  # This file
+└── PRIVACY_POLICY.md   # Privacy guarantee
 ```
 
 ---
@@ -123,6 +123,7 @@ pytesseract==0.3.10
 Pillow==10.1.0
 opencv-python-headless==4.8.1.78
 numpy==1.24.3
+streamlit-paste-button==0.1.0
 ```
 
 ---
@@ -130,18 +131,19 @@ numpy==1.24.3
 ## Workflow
 
 ### User Flow:
-1. Pharmacist receives paper Rx
-2. Takes photo with phone
-3. Goes to https://pharmacy-ocr-railway-production.up.railway.app
-4. Uploads image
-5. Views extracted fields
-6. Copies values to pharmacy software
-7. Closes page (all data deleted)
+1. `Win+Maj+S` → Capture prescription area (sans info patient!)
+2. Go to https://pharmacie.up.railway.app
+3. Click blue button "APPUYEZ ICI POUR COLLER LA CAPTURE"
+4. View extracted fields / OCR brut (tabs)
+5. Copy values to pharmacy software
+6. Close page (all data deleted)
+
+**Time:** 5-8 seconds
 
 ### Technical Flow:
 ```
-Image upload → RAM storage → Tesseract OCR → Regex extraction
-→ Display results → Page close → RAM cleared
+Clipboard paste → RAM → Tesseract OCR (eng+fra) → Regex extraction
+→ Display in tabs → Page close → RAM cleared
 ```
 
 ---
@@ -157,10 +159,9 @@ streamlit run app.py
 
 ### Deploy Updates:
 ```bash
-git add .
-git commit -m "Update OCR patterns"
-git push origin main
-# Railway auto-deploys in 3-5 minutes
+cd C:\Users\sbcom\Development\claude-projects\pharmacy-ocr-railway
+railway link -p passionate-kindness
+railway up --detach --service pharmacy-ocr-railway
 ```
 
 ---
@@ -209,7 +210,7 @@ git push origin main
 - Optional: Improve regex patterns based on real Rx formats
 
 ### Monitoring:
-- Railway dashboard: https://railway.app/project/7400f9c4-b10d-4b9a-b6e7-caf6867217f5
+- Railway dashboard (project: passionate-kindness)
 - Build logs available
 - No runtime logs (privacy by design)
 
@@ -226,6 +227,24 @@ git push origin main
 
 ---
 
+## Recent Enhancements (Nov 25, 2025)
+
+- ✅ **Clipboard Paste Implementation**
+  - Uses `streamlit-paste-button==0.1.0` package
+  - 3x faster than file upload (5-8s vs 15-23s)
+  - Button: "APPUYEZ ICI POUR COLLER LA CAPTURE"
+
+- ✅ **French Quebec UI**
+  - All text in French
+  - Red warning banner: "NE PAS CAPTURER: Nom du patient, DDN, téléphone, RAMQ"
+  - Tabs: "Champs extraits" / "Texte OCR brut"
+  - Larger OCR text area (400px)
+
+- ✅ **Railway Project Link**
+  - Project: `passionate-kindness`
+  - Service: `pharmacy-ocr-railway`
+  - Deploy command: `railway up --detach --service pharmacy-ocr-railway`
+
 ## Future Enhancements (Optional)
 
 - [ ] Improve regex patterns with real Rx data
@@ -238,13 +257,6 @@ git push origin main
 
 ---
 
-## Contact
-
-- **GitHub**: https://github.com/sb-new-projects/pharmacy-ocr-railway
-- **Railway**: https://railway.app/project/7400f9c4-b10d-4b9a-b6e7-caf6867217f5
-
----
-
-**Project Status**: ✅ COMPLETE AND DEPLOYED
-**Production URL**: https://pharmacy-ocr-railway-production.up.railway.app
-**Privacy Guarantee**: ZERO DATA RETENTION
+**Project Status**: ✅ COMPLETE
+**Production URL**: https://pharmacie.up.railway.app
+**Privacy**: Zero data retention
