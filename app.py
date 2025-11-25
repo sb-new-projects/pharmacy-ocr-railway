@@ -4,6 +4,7 @@ from PIL import Image
 import re
 import json
 from datetime import datetime
+from streamlit_paste_button import paste_image_button
 
 st.set_page_config(page_title="Quebec Rx OCR", page_icon="💊", layout="wide")
 
@@ -110,15 +111,24 @@ def extract_prescription_only(ocr_text):
 
     return extracted
 
-# Upload
-uploaded_file = st.file_uploader("Upload Prescription (Photo/Scan)", type=['png', 'jpg', 'jpeg'])
+# PASTE ZONE
+st.markdown("### 📋 Quick Paste Workflow")
+st.info("**3-Second Process:** `Win+Shift+S` → Select prescription area → Click button below → `Ctrl+V`")
 
-if uploaded_file:
+paste_result = paste_image_button(
+    label="📋 Paste from Clipboard",
+    background_color="#00A0DC",
+    hover_background_color="#0088C0",
+    key="paste_prescription"
+)
+
+if paste_result.image_data is not None:
+    image = paste_result.image_data
+
     col1, col2 = st.columns([1, 1])
 
     with col1:
         st.subheader("📸 Prescription")
-        image = Image.open(uploaded_file)
         st.image(image, use_column_width=True)
 
     with col2:
@@ -202,8 +212,6 @@ if uploaded_file:
                 st.text_area("", ocr_text, height=150)
 
 else:
-    st.info("📤 Upload a prescription to extract fields")
-
     st.markdown("""
     ### 🔒 Privacy & Security:
     - **NO DATABASE** - nothing is saved anywhere
@@ -233,11 +241,11 @@ else:
     - **Dispensing date** - today's date
 
     ### 🔄 Your Workflow:
-    1. Upload Rx image
-    2. Copy extracted fields
-    3. Paste into your pharmacy software
-    4. Look up patient (already in system)
-    5. Look up DIN (based on medication)
-    6. Fill in dispensing details
-    7. Complete transaction
+    1. **Win+Shift+S** - Screenshot prescription
+    2. **Click paste button** - above
+    3. **Ctrl+V** - paste image
+    4. **Copy extracted fields** - paste into pharmacy software
+    5. **Look up patient** - already in system
+    6. **Look up DIN** - based on medication
+    7. **Complete transaction**
     """)
